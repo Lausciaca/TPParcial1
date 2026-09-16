@@ -1,4 +1,5 @@
-@startuml Diagrama de clases - TP Facturacion
+@startuml
+title Diagrama de clases - TP Facturacion (solo Modelos)
 skinparam classAttributeIconSize 0
 
 package Modelos {
@@ -19,16 +20,18 @@ package Modelos {
     + Anulada : bool
     + FechaAnulacion : DateTime?
     + Detalles : List<FacturaDetalle>
-    + RecalcularTotal()
+    + RecalcularTotal() : void
   }
   class FacturaDetalle {
     + Id : int
     + FacturaId : int
     + ProductoId : int
+    + CodigoProducto : string
+    + NombreProducto : string
     + Cantidad : int
     + PrecioUnitario : decimal
     + Subtotal : decimal
-    + Recalcular()
+    + Recalcular() : void
   }
   class InformeProducto {
     + ProductoId : int
@@ -37,79 +40,16 @@ package Modelos {
     + CantidadFacturada : int
     + Monto : decimal
   }
-  Factura "1" *-- "n" FacturaDetalle
-}
 
-package Datos {
-  class FabricaConexiones {
-    + ObtenerCadenaConexion() : string
-    + CrearConexion() : SqlConnection
-  }
-  class ProductoDatos {
-    + Crear() : int
-    + Modificar()
-    + Desactivar()
-    + ObtenerPorId() : Producto?
-    + Buscar() : List<Producto>
-    + ExisteCodigo() : bool
-  }
-  class FacturaDatos {
-    + Emitir() : int
-    + BuscarCabeceras() : List<Factura>
-    + ObtenerCompleta() : Factura?
-    + Anular()
-  }
-  class InformeDatos {
-    + VentasPorProducto() : List<InformeProducto>
-  }
-  class AyudanteExcepciones {
-    + Traducir() : Exception
-  }
+  Factura "1" *-- "0..*" FacturaDetalle : contiene
+  Producto "1" o-- "0..*" FacturaDetalle : referencia
+  Producto "1" o-- "0..*" InformeProducto : resume
 }
-
-package Comun {
-  class ExcepcionValidacion {
-    + ExcepcionValidacion(message : string)
-  }
-}
-
-package Servicios {
-  class ServicioProducto {
-    + Alta() : int
-    + Modificar()
-    + Baja()
-    + Buscar() : List<Producto>
-  }
-  class BorradorFactura {
-    + AgregarLinea()
-    + QuitarLinea()
-    + ValidarParaEmitir()
-    + ToFactura() : Factura
-  }
-  class ServicioFactura {
-    + NuevoBorrador() : BorradorFactura
-    + Emitir() : int
-    + Buscar() : List<Factura>
-    + Anular()
-    + InformeVentas() : List<InformeProducto>
-  }
-}
-
-ServicioProducto --> ProductoDatos
-ServicioProducto --> Producto
-ServicioFactura --> FacturaDatos
-ServicioFactura --> InformeDatos
-ServicioFactura ..> BorradorFactura
-FacturaDatos ..> Factura
-InformeDatos ..> InformeProducto
-BorradorFactura ..> Producto
-BorradorFactura ..> ExcepcionValidacion
-ServicioProducto ..> ExcepcionValidacion
-ProductoDatos ..> ExcepcionValidacion
-FacturaDatos ..> ExcepcionValidacion
 
 note bottom
-  Forms -> Servicios -> Datos -> SqlCommand -> SQL Server
-  Forms NO contienen SQL (TP §5.4)
+  Solo entidades del dominio (Modelos/).
+  Factura es raiz del agregado maestro-detalle.
+  PrecioUnitario es copia historica del precio vigente.
+  Producto preexiste: agregacion, no dueno. Informe es DTO agrupado por producto.
 end note
 @enduml

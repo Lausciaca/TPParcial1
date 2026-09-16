@@ -679,6 +679,9 @@ namespace TPParcial1
                 // de alta o de baja un producto en la otra solapa.
                 if (tabPrincipal.SelectedTab == tabEmision)
                     CargarComboProductos();
+
+                if (tabPrincipal.SelectedTab == tabConsulta)
+                    BuscarFacturas();
             }
             catch (Exception ex) { Manejar(ex); }
         }
