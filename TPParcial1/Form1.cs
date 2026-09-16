@@ -1,3 +1,4 @@
+using System.Globalization;
 using TPParcial1.Comun;
 using TPParcial1.Modelos;
 using TPParcial1.Servicios;
@@ -82,6 +83,12 @@ namespace TPParcial1
             }
             catch (Exception ex)
             {
+                // Si el fallo fue antes de crear los servicios (por ejemplo, falta
+                // la cadena de conexión en App.config), se deshabilita la interfaz
+                // para que un clic posterior no termine en una NullReferenceException.
+                if (_servicioProducto is null || _servicioFactura is null)
+                    tabPrincipal.Enabled = false;
+
                 Manejar(ex);
             }
         }
@@ -208,8 +215,7 @@ namespace TPParcial1
                     txtNombre.Focus();
                     return;
                 }
-                // TryParse usa la cultura de Windows: en es-AR el separador decimal es la coma.
-                if (!decimal.TryParse(txtPrecio.Text.Trim(), out decimal precio))
+                if (!TryParsePrecio(txtPrecio.Text, out decimal precio))
                 {
                     Avisar("El precio no es un número válido.");
                     txtPrecio.Focus();
@@ -689,6 +695,38 @@ namespace TPParcial1
         // ==================================================================
         // 7) HELPERS COMUNES
         // ==================================================================
+
+        /// <summary>
+        /// Parsea un precio aceptando tanto coma como punto como separador decimal.
+        /// El separador decimal es el que aparece más a la derecha; el otro se
+        /// descarta como separador de miles. Evita que en es-AR un "4500.50"
+        /// termine interpretado como 450050 (el punto como separador de miles).
+        /// </summary>
+        private static bool TryParsePrecio(string texto, out decimal precio)
+        {
+            precio = 0;
+            texto = texto.Trim();
+            if (texto.Length == 0) return false;
+
+            int iComa = texto.LastIndexOf(',');
+            int iPunto = texto.LastIndexOf('.');
+
+            char? decimalSep =
+                iComa >= 0 && iPunto >= 0 ? (iComa > iPunto ? ',' : '.') :
+                iComa >= 0 ? ',' :
+                iPunto >= 0 ? '.' : null;
+
+            string normalizado = texto;
+            if (decimalSep is not null)
+            {
+                char miles = decimalSep == ',' ? '.' : ',';
+                normalizado = texto.Replace(miles.ToString(), "")
+                                   .Replace(decimalSep.Value, '.');
+            }
+
+            return decimal.TryParse(normalizado, NumberStyles.Number,
+                CultureInfo.InvariantCulture, out precio);
+        }
 
         /// <summary>Crea una columna de texto enlazada a una propiedad de la entidad.</summary>
         private static DataGridViewTextBoxColumn ColTexto(

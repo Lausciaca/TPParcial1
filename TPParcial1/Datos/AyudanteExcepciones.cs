@@ -32,8 +32,7 @@ public static class AyudanteExcepciones
         {
             if (e.Number is -2 or 2 or 53 or 4060 or 18456 or 40615 or 40197)
                 return true;
-            if (e.Message.Contains("network", StringComparison.OrdinalIgnoreCase) ||
-                e.Message.Contains("red", StringComparison.OrdinalIgnoreCase))
+            if (e.Message.Contains("network", StringComparison.OrdinalIgnoreCase))
                 return true;
         }
         return false;
